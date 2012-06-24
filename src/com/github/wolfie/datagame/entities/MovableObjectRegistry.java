@@ -7,8 +7,10 @@ import rlforj.los.PrecisePermissive;
 
 import com.github.wolfie.datagame.DataLevel;
 import com.github.wolfie.datagame.DataPlayer;
+import com.github.wolfie.datagame.entities.Mob.TileChangeListener;
+import com.github.wolfie.engine.TickData;
 
-public class MovableObjectRegistry {
+public class MovableObjectRegistry implements TileChangeListener {
 
 	private final DataLevel level;
 	private final Set<DataPlayer> players = new HashSet<>();
@@ -21,15 +23,28 @@ public class MovableObjectRegistry {
 
 	public void register(final DataPlayer player) {
 		players.add(player);
+		player.setTileChangeListener(this);
 	}
 
 	public void postTick() {
 		if (losNeedsRecalculation) {
+			level.clearVisibility();
 			for (final DataPlayer player : players) {
 				losAlgorithm.visitFieldOfView(level, player.getTileX(),
 						player.getTileY(), player.getVisionRange());
 			}
 			losNeedsRecalculation = false;
 		}
+	}
+
+	public void tick(final long nsBetweenTicks, final TickData tickData) {
+		for (final DataPlayer player : players) {
+			player.tick(nsBetweenTicks, tickData);
+		}
+	}
+
+	@Override
+	public void tileChanged(final Mob mob) {
+		losNeedsRecalculation = true;
 	}
 }

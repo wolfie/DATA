@@ -8,6 +8,7 @@ import com.github.wolfie.datagame.tiles.SandTile;
 import com.github.wolfie.datagame.tiles.SandTreeTile;
 import com.github.wolfie.engine.Colors;
 import com.github.wolfie.engine.GameScreen;
+import com.github.wolfie.engine.MouseData;
 import com.github.wolfie.engine.TickData;
 import com.github.wolfie.engine.level.AbstractTile;
 import com.github.wolfie.engine.level.LevelBuilder;
@@ -18,8 +19,13 @@ public class DataGameScreen extends GameScreen {
 	private final Bitmap bitmap;
 	private final DataGame game;
 	private DataLevel level;
-	private final DataPlayer player = new DataPlayer(0, 0);
+	private final DataPlayer player;
 	private final MovableObjectRegistry registry;
+
+	private int scrollLeft = 0;
+	private int scrollTop = 0;
+	private final int maxScrollTop;
+	private final int maxScrollLeft;
 
 	protected DataGameScreen(final int width, final int height,
 			final DataGame dataGame) {
@@ -44,6 +50,10 @@ public class DataGameScreen extends GameScreen {
 			}
 		}.build());
 
+		maxScrollLeft = level.widthInTiles * DataTile.WIDTH - width;
+		maxScrollTop = level.heightInTiles * DataTile.HEIGHT - height;
+
+		player = new DataPlayer(0, 0, level);
 		registry = new MovableObjectRegistry(level);
 		registry.register(player);
 	}
@@ -52,22 +62,25 @@ public class DataGameScreen extends GameScreen {
 	public Bitmap getBitmap(final long nsSinceLastFrame) {
 		bitmap.clear(Colors.BLACK);
 
-		for (int y = 0; y < level.height; y++) {
-			for (int x = 0; x < level.width; x++) {
+		for (int y = 0; y < level.heightInTiles; y++) {
+			for (int x = 0; x < level.widthInTiles; x++) {
 				final DataTile tile = level.getTile(x, y);
 				Bitmap tileBitmap;
 				if (level.isVisibleTile(x, y)) {
 					tileBitmap = tile.getBitmap();
 				} else {
-					tileBitmap = tile.getBitmap().blend(0xAA000000);
+					tileBitmap = tile.getBitmap().blend(0x55000000);
 				}
-				bitmap.blit(tileBitmap,
-						x * DataTile.WIDTH + tile.getOffsetPixelsX(), y
-								* DataTile.HEIGHT + tile.getOffsetPixelsY());
+				final int x2 = x * DataTile.WIDTH + tile.getOffsetPixelsX()
+						- scrollLeft;
+				final int y2 = y * DataTile.HEIGHT + tile.getOffsetPixelsY()
+						- scrollTop;
+				bitmap.blit(tileBitmap, x2, y2);
 			}
-			if ((int) player.topLeftY == y) {
+			if (player.getTileY() == y) {
 				bitmap.blit(player.getBitmap(nsSinceLastFrame),
-						(int) player.topLeftX, (int) player.topLeftY);
+						(int) player.topLeftX - scrollLeft,
+						(int) player.topLeftY - scrollTop);
 			}
 		}
 
@@ -76,8 +89,26 @@ public class DataGameScreen extends GameScreen {
 
 	@Override
 	public void tick(final long nsBetweenTicks, final TickData tickData) {
+		final MouseData mouseData = tickData.mouseData;
+
+		if (mouseData.mouseButtonWasPressed[MouseData.RIGHT_MOUSE]) {
+			final int x = mouseData.x + scrollLeft;
+			final int y = mouseData.y + scrollTop;
+
+			player.walkTo(x, y);
+		}
+
+		if (mouseData.isBeingDragged(MouseData.MIDDLE_MOUSE)) {
+			scrollTop = Math.max(0, scrollTop + mouseData.prevY - mouseData.y);
+			scrollTop = Math.min(scrollTop, maxScrollTop);
+			scrollLeft = Math
+					.max(0, scrollLeft + mouseData.prevX - mouseData.x);
+			scrollLeft = Math.min(scrollLeft, maxScrollLeft);
+		}
+
+		registry.tick(nsBetweenTicks, tickData);
+
 		registry.postTick();
-		tickData.mouseData.postTick();
 	}
 
 }

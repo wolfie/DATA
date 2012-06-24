@@ -23,7 +23,7 @@ public class DataLevel extends Level implements ILosBoard {
 
 	@Override
 	public boolean contains(final int x, final int y) {
-		return x >= 0 && x <= width && y >= 0 && y <= height;
+		return x >= 0 && x <= widthInTiles && y >= 0 && y <= heightInTiles;
 	}
 
 	@Override
@@ -38,7 +38,7 @@ public class DataLevel extends Level implements ILosBoard {
 
 	@Override
 	public void visit(final int x, final int y) {
-		visibleTileIndexes.add(y * width + x);
+		visibleTileIndexes.add(y * widthInTiles + x);
 	}
 
 	public void clearVisibility() {
@@ -46,7 +46,7 @@ public class DataLevel extends Level implements ILosBoard {
 	}
 
 	public boolean isVisibleTile(final int x, final int y) {
-		return visibleTileIndexes.contains(y * width + x);
+		return visibleTileIndexes.contains(y * widthInTiles + x);
 	}
 
 	@Override
