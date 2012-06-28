@@ -15,7 +15,7 @@ public class DataArt extends Art {
 	public static final Bitmap     PAUSED = load("/sprites/paused.gif");
 
 	public static final Font.CaseInsensitive DEFAULT_FONT = new Font.CaseInsensitive(
-			cut("/fonts/default.png", 4, 6), 
+			cut("/fonts/default.gif", 4, 6), 
 			"ABCDEFGHIJKLMNOPQRSTUVWXYZ",
 			"0123456789.,!?()-=/\\*");
 	

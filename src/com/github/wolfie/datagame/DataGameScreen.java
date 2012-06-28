@@ -1,6 +1,7 @@
 package com.github.wolfie.datagame;
 
 import java.net.URL;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -34,6 +35,7 @@ public class DataGameScreen extends GameScreen {
 	private final int maxScrollTop;
 	private final int maxScrollLeft;
 	private Bitmap minimapBitmap;
+	private final int[] selectBox = new int[] { -1, -1, -1, -1 };
 
 	protected DataGameScreen(final int width, final int height,
 			final DataGame dataGame) {
@@ -118,6 +120,11 @@ public class DataGameScreen extends GameScreen {
 			}
 		}
 
+		if (selectBox[0] > -1) {
+			bitmap.rectangle(selectBox[0], selectBox[1], selectBox[2],
+					selectBox[3], Colors.GREEN);
+		}
+
 		bitmap.blit(minimapBitmap, 10, 10, Alignment.BOTTOM_LEFT);
 
 		bitmap.blit(
@@ -176,9 +183,9 @@ public class DataGameScreen extends GameScreen {
 		return minimap;
 	}
 
-	private String getFps(final long nsSinceLastFrame) {
+	private int getFps(final long nsSinceLastFrame) {
 		final double fps = 1.0d / Util.nanoSecondsToSeconds(nsSinceLastFrame);
-		return String.valueOf((long) fps);
+		return (int) (fps + 0.5);
 	}
 
 	@Override
@@ -201,12 +208,25 @@ public class DataGameScreen extends GameScreen {
 			player.walkTo(x, y);
 		}
 
-		if (mouseData.isBeingDragged(MouseData.MIDDLE_MOUSE)) {
+		if (mouseData.mouseButtonIsDragged[MouseData.MIDDLE_MOUSE]) {
 			scrollTop = Math.max(0, scrollTop + mouseData.prevY - mouseData.y);
 			scrollTop = Math.min(scrollTop, maxScrollTop);
 			scrollLeft = Math
 					.max(0, scrollLeft + mouseData.prevX - mouseData.x);
 			scrollLeft = Math.min(scrollLeft, maxScrollLeft);
+		}
+
+		if (mouseData.mouseButtonIsDragged[MouseData.LEFT_MOUSE]) {
+			if (!mouseData.mouseButtonWasDragged[MouseData.LEFT_MOUSE]) {
+				selectBox[0] = mouseData.x;
+				selectBox[1] = mouseData.y;
+			}
+			selectBox[2] = mouseData.x - selectBox[0];
+			selectBox[3] = mouseData.y - selectBox[1];
+		} else {
+			if (!mouseData.mouseButtonWasDragged[MouseData.LEFT_MOUSE]) {
+				Arrays.fill(selectBox, -1);
+			}
 		}
 
 		for (final Creep creep : creeps) {
@@ -218,5 +238,4 @@ public class DataGameScreen extends GameScreen {
 		registry.tick(nsBetweenTicks, tickData);
 		registry.postTick();
 	}
-
 }

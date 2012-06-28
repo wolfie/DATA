@@ -26,7 +26,6 @@ public class DataGame extends EngineCanvas {
 	private DataGameScreen gameScreen;
 
 	public DataGame() {
-		addMouseListener(mouseData);
 	}
 
 	@Override
