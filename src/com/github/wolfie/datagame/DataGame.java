@@ -11,7 +11,6 @@ import javax.imageio.ImageIO;
 
 import com.github.wolfie.engine.EngineCanvas;
 import com.github.wolfie.engine.GameScreen;
-import com.github.wolfie.engine.MouseData;
 
 public class DataGame extends EngineCanvas {
 	private static final long serialVersionUID = 1448039885235835630L;
@@ -25,10 +24,8 @@ public class DataGame extends EngineCanvas {
 	private boolean paused;
 	public DataKeys keyData;
 	private DataGameScreen gameScreen;
-	public final MouseData mouseData;
 
 	public DataGame() {
-		mouseData = new MouseData();
 		addMouseListener(mouseData);
 	}
 
@@ -38,6 +35,11 @@ public class DataGame extends EngineCanvas {
 			@Override
 			public void windowClosing(final WindowEvent e) {
 				running = false;
+			}
+
+			@Override
+			public void windowLostFocus(final WindowEvent e) {
+				pauseGame();
 			}
 		};
 	}
@@ -66,11 +68,13 @@ public class DataGame extends EngineCanvas {
 	@Override
 	public void pauseGame() {
 		paused = true;
+		mouseData.confineMouse = false;
 	}
 
 	@Override
 	public void unpauseGame() {
 		paused = false;
+		mouseData.confineMouse = true;
 	}
 
 	@Override
@@ -82,5 +86,21 @@ public class DataGame extends EngineCanvas {
 			e.printStackTrace();
 		}
 		return createBlankCursor();
+	}
+
+	public static DataGame getInstance() {
+		return (DataGame) EngineCanvas.getInstance();
+	}
+
+	public void togglePause() {
+		if (paused) {
+			unpauseGame();
+		} else {
+			pauseGame();
+		}
+	}
+
+	public boolean isPaused() {
+		return paused;
 	}
 }

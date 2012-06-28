@@ -8,6 +8,6 @@ public class DataPlayer extends Player {
 	}
 
 	public int getVisionRange() {
-		return 5;
+		return 7;
 	}
 }

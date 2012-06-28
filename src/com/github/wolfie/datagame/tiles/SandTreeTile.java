@@ -12,7 +12,8 @@ public class SandTreeTile extends DataTile implements Obstacle {
 		bitmap = new Bitmap(DataTile.WIDTH, DataTile.HEIGHT * 2);
 		bitmap.blit(new SandTile().getBitmap(), 0, 16);
 		bitmap.blit(DataArt.TILE_TREE[DataGame.RANDOM
-				.nextInt(DataArt.TILE_TREE.length)][0], 0, 0);
+				.nextInt(DataArt.TILE_TREE.length)][DataGame.RANDOM
+				.nextInt(DataArt.TILE_TREE[0].length)], 0, 0);
 	}
 
 	@Override

@@ -36,15 +36,9 @@ public abstract class Mob extends GameObject implements MovableGameObject {
 		this.level = level;
 	}
 
-	public void addWaypointPx(final double x, final double y) {
+	private void addWaypointPx(final double x, final double y) {
 		waypoints.add(new Point2D.Double(x, y));
 		processWaypoints();
-	}
-
-	public void setWaypointPx(final double x, final double y) {
-		waypoints.clear();
-		currentWaypoint = null;
-		addWaypointPx(x, y);
 	}
 
 	protected void processWaypoints() {
@@ -142,4 +136,6 @@ public abstract class Mob extends GameObject implements MovableGameObject {
 			}
 		}
 	}
+
+	public abstract int getVisionRange();
 }

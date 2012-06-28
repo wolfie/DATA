@@ -14,6 +14,7 @@ public class MovableObjectRegistry implements TileChangeListener {
 
 	private final DataLevel level;
 	private final Set<DataPlayer> players = new HashSet<>();
+	private final Set<Mob> mobs = new HashSet<>();
 	private final PrecisePermissive losAlgorithm = new PrecisePermissive();
 	private boolean losNeedsRecalculation = true;
 
@@ -33,6 +34,10 @@ public class MovableObjectRegistry implements TileChangeListener {
 				losAlgorithm.visitFieldOfView(level, player.getTileX(),
 						player.getTileY(), player.getVisionRange());
 			}
+			for (final Mob mob : mobs) {
+				losAlgorithm.visitFieldOfView(level, mob.getTileX(),
+						mob.getTileY(), mob.getVisionRange());
+			}
 			losNeedsRecalculation = false;
 		}
 	}
@@ -46,5 +51,10 @@ public class MovableObjectRegistry implements TileChangeListener {
 	@Override
 	public void tileChanged(final Mob mob) {
 		losNeedsRecalculation = true;
+	}
+
+	public void register(final Mob mob) {
+		mobs.add(mob);
+		mob.setTileChangeListener(this);
 	}
 }

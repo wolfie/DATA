@@ -5,7 +5,7 @@ import com.github.wolfie.datagame.DataLevel;
 import com.github.wolfie.engine.TickData;
 import com.mojang.mojam.screen.Bitmap;
 
-public class Player extends Mob {
+public abstract class Player extends Mob {
 
 	private static int HEIGHT = 2;
 	private static int WIDTH = 1;

@@ -6,7 +6,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import rlforj.los.BresLos;
+import rlforj.los.BresOpportunisticLos;
 import rlforj.los.ILosAlgorithm;
 
 import com.github.wolfie.datagame.DataLevel;
@@ -26,7 +26,7 @@ public class Path {
 	}
 
 	public List<Point> getWaypoints() {
-		optimizePath();
+		optimizePathIfNeeded();
 		final List<Point> waypoints = new ArrayList<>();
 		for (final Node node : nodes) {
 			waypoints.add(new Point(node.x, node.y));
@@ -36,7 +36,7 @@ public class Path {
 
 	@Override
 	public String toString() {
-		optimizePath();
+		optimizePathIfNeeded();
 		final StringBuilder sb = new StringBuilder();
 		for (final Node node : nodes) {
 			sb.append(String.format("-> [%s,%s] ", node.x, node.y));
@@ -44,9 +44,9 @@ public class Path {
 		return sb.toString();
 	}
 
-	private void optimizePath() {
+	private void optimizePathIfNeeded() {
 		if (!hasBeenOptimized) {
-			final ILosAlgorithm a = new BresLos(false);
+			final ILosAlgorithm a = new BresOpportunisticLos();
 
 			Iterator<Node> endIter = nodes.descendingIterator();
 			Node start = nodes.getFirst();
