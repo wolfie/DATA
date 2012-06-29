@@ -166,9 +166,11 @@ public class DataGameScreen extends GameScreen {
 
 		if (mouseData.mouseButtonWasPressed[MouseData.RIGHT_MOUSE]) {
 
+			// move player with mouse //
+
 			final int x;
 			final int y;
-			if (!wasClickedInsideMinimap(mouseData.x, mouseData.y)) {
+			if (!cursorIsInsideMinimap(mouseData)) {
 				x = mouseData.x + scrollLeft;
 				y = mouseData.y + scrollTop;
 			} else {
@@ -176,12 +178,14 @@ public class DataGameScreen extends GameScreen {
 						* minimapBitmap.getScale() + 0.5);
 				y = (int) ((mouseData.y - height + MINIMAP_POS_Y + minimapBitmap
 						.getHeight()) * minimapBitmap.getScale() + 0.5);
-				System.out.println("DataGameScreen.tick() " + x + "," + y);
 			}
 			player.walkTo(x, y);
 		}
 
 		if (mouseData.mouseButtonIsDragged[MouseData.MIDDLE_MOUSE]) {
+
+			// scroll camera with middle-mouse-drag //
+
 			scrollTop = Math.max(0, scrollTop + mouseData.prevY - mouseData.y);
 			scrollTop = Math.min(scrollTop, maxScrollTop);
 			scrollLeft = Math
@@ -189,16 +193,44 @@ public class DataGameScreen extends GameScreen {
 			scrollLeft = Math.min(scrollLeft, maxScrollLeft);
 		}
 
-		if (mouseData.mouseButtonIsDragged[MouseData.LEFT_MOUSE]) {
-			if (!mouseData.mouseButtonWasDragged[MouseData.LEFT_MOUSE]) {
-				selectBox[0] = mouseData.x;
-				selectBox[1] = mouseData.y;
-			}
-			selectBox[2] = mouseData.x - selectBox[0];
-			selectBox[3] = mouseData.y - selectBox[1];
+		if (mouseData.mouseButtonIsPressed[MouseData.LEFT_MOUSE]
+				&& cursorIsInsideMinimap(mouseData)) {
+
+			// move camera with minimap //
+
+			int translatedX = (int) ((mouseData.x - MINIMAP_POS_X)
+					* minimapBitmap.getScale() + 0.5);
+			int translatedY = (int) ((mouseData.y - height + MINIMAP_POS_Y + minimapBitmap
+					.getHeight()) * minimapBitmap.getScale() + 0.5);
+
+			translatedX -= width / 2;
+			translatedX = Math.max(0, translatedX);
+			translatedX = Math.min(translatedX, level.widthInTiles
+					* DataTile.WIDTH - width);
+			scrollLeft = translatedX;
+
+			translatedY -= height / 2;
+			translatedY = Math.max(0, translatedY);
+			translatedY = Math.min(translatedY, level.heightInTiles
+					* DataTile.HEIGHT - height);
+			scrollTop = translatedY;
+
 		} else {
-			if (!mouseData.mouseButtonWasDragged[MouseData.LEFT_MOUSE]) {
-				Arrays.fill(selectBox, -1);
+
+			// drag selection box //
+
+			if (mouseData.mouseButtonIsDragged[MouseData.LEFT_MOUSE]) {
+				if (!mouseData.mouseButtonWasDragged[MouseData.LEFT_MOUSE]) {
+					selectBox[0] = mouseData.x;
+					selectBox[1] = mouseData.y;
+				}
+				selectBox[2] = mouseData.x - selectBox[0];
+				selectBox[3] = mouseData.y - selectBox[1];
+			} else {
+				// dragging stopped
+				if (!mouseData.mouseButtonWasDragged[MouseData.LEFT_MOUSE]) {
+					Arrays.fill(selectBox, -1);
+				}
 			}
 		}
 
@@ -212,7 +244,10 @@ public class DataGameScreen extends GameScreen {
 		registry.postTick();
 	}
 
-	private boolean wasClickedInsideMinimap(final int x, final int y) {
+	private boolean cursorIsInsideMinimap(final MouseData mouseData) {
+		final int x = mouseData.x;
+		final int y = mouseData.y;
+
 		// assuming MINIMAP_ALIGN = BOTTOM_LEFT
 		final boolean isWithinWidth = MINIMAP_POS_X < x
 				&& x < MINIMAP_POS_X + minimapBitmap.getWidth();
