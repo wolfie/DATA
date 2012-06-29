@@ -27,6 +27,11 @@ public class DataGameScreen extends GameScreen {
 	private static final int MINIMAP_POS_Y = 10;
 	private static final int MINIMAP_POS_X = 10;
 
+	private static final int LEFT_DRAG_MODE_NONE = 0;
+	private static final int LEFT_DRAG_MODE_MINIMAP = 1;
+	private static final int LEFT_DRAG_MODE_SELECTION_BOX = 2;
+	private int leftDragMode;
+
 	private final Bitmap bitmap;
 	private final DataGame game;
 	private DataLevel level;
@@ -193,44 +198,41 @@ public class DataGameScreen extends GameScreen {
 			scrollLeft = Math.min(scrollLeft, maxScrollLeft);
 		}
 
+		/*
+		 * HOLY SHIT THIS CODE SUCKS AND IS ALSO MESSY
+		 */
+
 		if (mouseData.mouseButtonIsPressed[MouseData.LEFT_MOUSE]
-				&& cursorIsInsideMinimap(mouseData)) {
-
+				&& (cursorIsInsideMinimap(mouseData) && leftDragMode == LEFT_DRAG_MODE_NONE)
+				|| leftDragMode == LEFT_DRAG_MODE_MINIMAP) {
 			// move camera with minimap //
+			moveCameraWithMinimap(mouseData);
+		}
 
-			int translatedX = (int) ((mouseData.x - MINIMAP_POS_X)
-					* minimapBitmap.getScale() + 0.5);
-			int translatedY = (int) ((mouseData.y - height + MINIMAP_POS_Y + minimapBitmap
-					.getHeight()) * minimapBitmap.getScale() + 0.5);
+		if (mouseData.mouseButtonIsDragged[MouseData.LEFT_MOUSE]) {
+			if ((cursorIsInsideMinimap(mouseData) && leftDragMode == LEFT_DRAG_MODE_NONE)
+					|| leftDragMode == LEFT_DRAG_MODE_MINIMAP) {
+				// move camera with minimap //
+				moveCameraWithMinimap(mouseData);
 
-			translatedX -= width / 2;
-			translatedX = Math.max(0, translatedX);
-			translatedX = Math.min(translatedX, level.widthInTiles
-					* DataTile.WIDTH - width);
-			scrollLeft = translatedX;
+			} else if (leftDragMode == LEFT_DRAG_MODE_NONE
+					|| leftDragMode == LEFT_DRAG_MODE_SELECTION_BOX) {
+				leftDragMode = LEFT_DRAG_MODE_SELECTION_BOX;
 
-			translatedY -= height / 2;
-			translatedY = Math.max(0, translatedY);
-			translatedY = Math.min(translatedY, level.heightInTiles
-					* DataTile.HEIGHT - height);
-			scrollTop = translatedY;
+				// drag selection box //
 
-		} else {
-
-			// drag selection box //
-
-			if (mouseData.mouseButtonIsDragged[MouseData.LEFT_MOUSE]) {
 				if (!mouseData.mouseButtonWasDragged[MouseData.LEFT_MOUSE]) {
 					selectBox[0] = mouseData.x;
 					selectBox[1] = mouseData.y;
 				}
 				selectBox[2] = mouseData.x - selectBox[0];
 				selectBox[3] = mouseData.y - selectBox[1];
-			} else {
-				// dragging stopped
-				if (!mouseData.mouseButtonWasDragged[MouseData.LEFT_MOUSE]) {
-					Arrays.fill(selectBox, -1);
-				}
+			}
+		} else {
+			// dragging stopped
+			leftDragMode = 0;
+			if (!mouseData.mouseButtonWasDragged[MouseData.LEFT_MOUSE]) {
+				Arrays.fill(selectBox, -1);
 			}
 		}
 
@@ -242,6 +244,27 @@ public class DataGameScreen extends GameScreen {
 
 		registry.tick(nsBetweenTicks, tickData);
 		registry.postTick();
+	}
+
+	private void moveCameraWithMinimap(final MouseData mouseData) {
+		leftDragMode = LEFT_DRAG_MODE_MINIMAP;
+
+		int translatedX = (int) ((mouseData.x - MINIMAP_POS_X)
+				* minimapBitmap.getScale() + 0.5);
+		int translatedY = (int) ((mouseData.y - height + MINIMAP_POS_Y + minimapBitmap
+				.getHeight()) * minimapBitmap.getScale() + 0.5);
+
+		translatedX -= width / 2;
+		translatedX = Math.max(0, translatedX);
+		translatedX = Math.min(translatedX, level.widthInTiles * DataTile.WIDTH
+				- width);
+		scrollLeft = translatedX;
+
+		translatedY -= height / 2;
+		translatedY = Math.max(0, translatedY);
+		translatedY = Math.min(translatedY, level.heightInTiles
+				* DataTile.HEIGHT - height);
+		scrollTop = translatedY;
 	}
 
 	private boolean cursorIsInsideMinimap(final MouseData mouseData) {
