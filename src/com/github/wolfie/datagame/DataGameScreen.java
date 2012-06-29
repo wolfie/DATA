@@ -23,6 +23,10 @@ import com.mojang.mojam.screen.Bitmap;
 
 public class DataGameScreen extends GameScreen {
 
+	private static final Alignment MINIMAP_ALIGN = Alignment.BOTTOM_LEFT;
+	private static final int MINIMAP_POS_Y = 10;
+	private static final int MINIMAP_POS_X = 10;
+
 	private final Bitmap bitmap;
 	private final DataGame game;
 	private DataLevel level;
@@ -34,7 +38,7 @@ public class DataGameScreen extends GameScreen {
 	private int scrollTop = 0;
 	private final int maxScrollTop;
 	private final int maxScrollLeft;
-	private Bitmap minimapBitmap;
+	private final Minimap minimapBitmap;
 	private final int[] selectBox = new int[] { -1, -1, -1, -1 };
 
 	protected DataGameScreen(final int width, final int height,
@@ -66,6 +70,8 @@ public class DataGameScreen extends GameScreen {
 		player = new DataPlayer(0, 0, level);
 		registry = new MovableObjectRegistry(level);
 		registry.register(player);
+
+		minimapBitmap = new Minimap(level);
 
 		generateCreep();
 	}
@@ -125,7 +131,8 @@ public class DataGameScreen extends GameScreen {
 					selectBox[3], Colors.GREEN);
 		}
 
-		bitmap.blit(minimapBitmap, 10, 10, Alignment.BOTTOM_LEFT);
+		bitmap.blit(minimapBitmap.getBitmap(), MINIMAP_POS_X, MINIMAP_POS_Y,
+				MINIMAP_ALIGN);
 
 		bitmap.blit(
 				DataArt.DEFAULT_FONT.textToBitmap(getFps(nsSinceLastFrame)
@@ -137,50 +144,6 @@ public class DataGameScreen extends GameScreen {
 		}
 
 		return bitmap;
-	}
-
-	private Bitmap getMinimapBitmap() {
-		final Bitmap minimap = new Bitmap(level.widthInTiles,
-				level.heightInTiles);
-		final int obstacleColor = 0xFF005500;
-		final int groundColor = 0xFF000000;
-		final int playerColor = 0xFFFFFFFF;
-		final int creepColor = 0xFFAAAAAA;
-
-		for (int y = 0; y < level.heightInTiles; y++) {
-			for (int x = 0; x < level.widthInTiles; x++) {
-				if (level.isObstacle(x, y)) {
-					minimap.setPixel(x, y, obstacleColor);
-				} else {
-					minimap.setPixel(x, y, groundColor);
-				}
-			}
-		}
-
-		for (int y = 0; y < level.heightInTiles; y++) {
-			for (int x = 0; x < level.widthInTiles; x++) {
-				if (level.isVisibleTile(x, y)) {
-					final int pixel = minimap.getPixel(x, y);
-					minimap.setPixel(x, y,
-							Bitmap.blendPixels(pixel, 0x55FFFFFF));
-				}
-			}
-		}
-
-		minimap.setPixel(player.getTileX(), player.getTileY(), playerColor);
-
-		for (final Creep creep : creeps) {
-			minimap.setPixel(creep.getTileX(), creep.getTileY(), creepColor);
-		}
-
-		final int windowX = scrollLeft / DataTile.WIDTH;
-		final int windowY = scrollTop / DataTile.HEIGHT;
-		final int windowWidth = DataGame.WIDTH / DataTile.WIDTH;
-		final int windowHeight = DataGame.HEIGHT / DataTile.HEIGHT;
-		minimap.rectangle(windowX, windowY, windowWidth, windowHeight,
-				Colors.WHITE);
-
-		return minimap;
 	}
 
 	private int getFps(final long nsSinceLastFrame) {
@@ -202,9 +165,19 @@ public class DataGameScreen extends GameScreen {
 		}
 
 		if (mouseData.mouseButtonWasPressed[MouseData.RIGHT_MOUSE]) {
-			final int x = mouseData.x + scrollLeft;
-			final int y = mouseData.y + scrollTop;
 
+			final int x;
+			final int y;
+			if (!wasClickedInsideMinimap(mouseData.x, mouseData.y)) {
+				x = mouseData.x + scrollLeft;
+				y = mouseData.y + scrollTop;
+			} else {
+				x = (int) ((mouseData.x - MINIMAP_POS_X)
+						* minimapBitmap.getScale() + 0.5);
+				y = (int) ((mouseData.y - height + MINIMAP_POS_Y + minimapBitmap
+						.getHeight()) * minimapBitmap.getScale() + 0.5);
+				System.out.println("DataGameScreen.tick() " + x + "," + y);
+			}
 			player.walkTo(x, y);
 		}
 
@@ -233,9 +206,19 @@ public class DataGameScreen extends GameScreen {
 			creep.tick(nsBetweenTicks, tickData);
 		}
 
-		minimapBitmap = getMinimapBitmap();
+		minimapBitmap.updateMinimap(player, creeps, scrollLeft, scrollTop);
 
 		registry.tick(nsBetweenTicks, tickData);
 		registry.postTick();
+	}
+
+	private boolean wasClickedInsideMinimap(final int x, final int y) {
+		// assuming MINIMAP_ALIGN = BOTTOM_LEFT
+		final boolean isWithinWidth = MINIMAP_POS_X < x
+				&& x < MINIMAP_POS_X + minimapBitmap.getWidth();
+		final boolean isWithinHeight = height - MINIMAP_POS_Y
+				- minimapBitmap.getHeight() < y
+				&& y < height - MINIMAP_POS_Y;
+		return isWithinWidth && isWithinHeight;
 	}
 }
